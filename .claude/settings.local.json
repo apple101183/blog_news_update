@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:tako-analytics.com)",
+      "WebFetch(domain:www.simoahava.com)"
+    ]
+  }
+}
