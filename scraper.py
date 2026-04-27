@@ -3,6 +3,7 @@ import html
 import re
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+from deep_translator import GoogleTranslator
 
 FEEDS = [
     {
@@ -10,12 +11,14 @@ FEEDS = [
         "url": "https://tako-analytics.com/rss/",
         "site_url": "https://tako-analytics.com",
         "accent": "#0ea5e9",
+        "lang": "zh-TW",  # 原文已是中文，不需翻譯
     },
     {
         "name": "Simo Ahava",
         "url": "https://www.simoahava.com/index.xml",
         "site_url": "https://www.simoahava.com",
         "accent": "#8b5cf6",
+        "lang": "en",  # 原文為英文，需翻譯
     },
 ]
 
@@ -44,12 +47,24 @@ def parse_date(entry) -> datetime:
     return datetime.now(timezone.utc)
 
 
+def translate(text: str) -> str:
+    if not text:
+        return text
+    try:
+        return GoogleTranslator(source="auto", target="zh-TW").translate(text)
+    except Exception:
+        return text  # 翻譯失敗時保留原文
+
+
 def fetch_articles(feed_config: dict) -> list[dict]:
     feed = feedparser.parse(feed_config["url"])
+    need_translation = feed_config.get("lang", "zh-TW") == "en"
     articles = []
     for entry in feed.entries[:MAX_ARTICLES]:
         summary_raw = getattr(entry, "summary", "") or getattr(entry, "description", "")
         summary = truncate(strip_html(summary_raw), SUMMARY_LENGTH)
+        if need_translation:
+            summary = translate(summary)
         link = entry.get("link", "")
         articles.append(
             {
